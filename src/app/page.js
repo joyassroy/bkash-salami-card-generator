@@ -53,8 +53,16 @@ export default function Home() {
   const handleDownload = async () => {
     if (cardRef.current) {
       try {
-        const dataUrl = await htmlToImage.toPng(cardRef.current, { quality: 1, pixelRatio: 2 });
+        // iOS এর জন্য pixelRatio: 2 এবং cacheBust: true ব্যবহার করা হয়েছে
+        const dataUrl = await htmlToImage.toPng(cardRef.current, { 
+          quality: 1, 
+          pixelRatio: 2,
+          cacheBust: true,
+          // iOS Safari তে ইমেজ লোড হওয়ার সময় দেওয়ার জন্য
+          backgroundColor: null,
+        });
         
+        // iOS/Mobile Native Share API (গ্যালারিতে সেভ করার জন্য)
         if (navigator.share) {
           try {
             const response = await fetch(dataUrl);
@@ -70,23 +78,17 @@ export default function Home() {
               return; 
             }
           } catch (shareError) {
-            console.log("শেয়ার ক্যান্সেল হয়েছে বা সমস্যা হয়েছে:", shareError);
+            console.log("শেয়ার ক্যান্সেল হয়েছে:", shareError);
           }
         }
 
-        // ইন-অ্যাপ ব্রাউজার বা ফলব্যাকের জন্য ডাউনলোড
+        // PC বা ফলব্যাক ডাউনলোড
         const link = document.createElement("a");
         link.download = "premium-bkash-card.png";
         link.href = dataUrl;
-        
-        // কিছু ব্রাউজারে ডাইরেক্ট ক্লিক কাজ না করলে
-        if (document.createEvent) {
-            const event = document.createEvent('MouseEvents');
-            event.initEvent('click', true, true);
-            link.dispatchEvent(event);
-        } else {
-            link.click();
-        }
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
 
       } catch (error) {
         console.error("কার্ড ডাউনলোড করতে সমস্যা হয়েছে:", error);
@@ -105,10 +107,9 @@ export default function Home() {
         <p className="text-gray-400">আপনার bKash QR কোড আপলোড করুন এবং নতুন কার্ড তৈরি করুন</p>
       </div>
 
-      {/* =================== নতুন গ্লাসমরফিজম ইন্সট্রাকশন সেকশন =================== */}
+      {/* নির্দেশিকা সেকশন */}
       {!src && !croppedQr && !isLoading && (
         <div className="mb-8 w-full max-w-md bg-white/5 backdrop-blur-xl border border-white/10 p-6 rounded-3xl shadow-2xl relative overflow-hidden">
-          {/* গ্লো এফেক্ট */}
           <div className={`absolute -top-10 -right-10 w-32 h-32 bg-[${BKASH_PINK}] rounded-full blur-3xl opacity-10`}></div>
           <div className={`absolute -bottom-10 -left-10 w-32 h-32 bg-[${BKASH_PINK}] rounded-full blur-3xl opacity-10`}></div>
           
@@ -135,7 +136,6 @@ export default function Home() {
           </ul>
         </div>
       )}
-      {/* ========================================================================= */}
 
       <div className="mb-8 flex flex-col items-center gap-4">
         <button 
@@ -158,7 +158,7 @@ export default function Home() {
 
       {src && !isLoading && (
         <div className="flex flex-col items-center w-full max-w-md">
-          <div className="w-full bg-white/5 p-4 rounded-3xl backdrop-blur-sm border border-white/10">
+          <div className="w-full bg-white/5 p-4 rounded-3xl backdrop-blur-sm border border-white/10 overflow-hidden">
             <Cropper
               ref={cropperRef}
               style={{ height: 350, width: "100%" }}
@@ -203,11 +203,8 @@ export default function Home() {
         </div>
       )}
 
-      {/* ৩. =================== শুধু এই CARD অংশটি পরিবর্তন করা হয়েছে =================== */}
       {croppedQr && !isLoading && (
         <div className="flex flex-col items-center mt-6 animate-fade-in-up">
-
-          {/* ── Ultra Premium Eid Salami Card ── */}
           <div
             ref={cardRef}
             style={{
@@ -220,215 +217,64 @@ export default function Home() {
               fontFamily: "sans-serif",
             }}
           >
-            {/* ── Inner border ring ── */}
-            <div style={{
-              position: "absolute", inset: "7px",
-              borderRadius: "26px",
-              border: "1px solid rgba(212,175,55,0.15)",
-              pointerEvents: "none",
-              zIndex: 2,
-            }} />
-
-            {/* ── Islamic 8-star geometric pattern top ── */}
-            <div style={{
-              position: "absolute", top: 0, left: 0, right: 0,
-              height: "130px", overflow: "hidden",
-              opacity: 0.055, pointerEvents: "none", zIndex: 1,
-            }}>
+            <div style={{ position: "absolute", inset: "7px", borderRadius: "26px", border: "1px solid rgba(212,175,55,0.15)", pointerEvents: "none", zIndex: 2 }} />
+            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "130px", overflow: "hidden", opacity: 0.055, pointerEvents: "none", zIndex: 1 }}>
               <svg width="360" height="130" viewBox="0 0 360 130" xmlns="http://www.w3.org/2000/svg">
                 {Array.from({ length: 10 }).map((_, i) =>
                   Array.from({ length: 4 }).map((_, j) => (
-                    <polygon
-                      key={`${i}-${j}`}
-                      points="20,0 23,14 37,14 26,23 30,37 20,28 10,37 14,23 3,14 17,14"
-                      fill="#FFD700"
-                      transform={`translate(${i * 40 - 10}, ${j * 40 - 10})`}
-                    />
+                    <polygon key={`${i}-${j}`} points="20,0 23,14 37,14 26,23 30,37 20,28 10,37 14,23 3,14 17,14" fill="#FFD700" transform={`translate(${i * 40 - 10}, ${j * 40 - 10})`} />
                   ))
                 )}
               </svg>
             </div>
-
-            {/* ── Islamic 8-star geometric pattern bottom ── */}
-            <div style={{
-              position: "absolute", bottom: 0, left: 0, right: 0,
-              height: "110px", overflow: "hidden",
-              opacity: 0.055, pointerEvents: "none", zIndex: 1,
-            }}>
+            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "110px", overflow: "hidden", opacity: 0.055, pointerEvents: "none", zIndex: 1 }}>
               <svg width="360" height="110" viewBox="0 0 360 110" xmlns="http://www.w3.org/2000/svg">
                 {Array.from({ length: 10 }).map((_, i) =>
                   Array.from({ length: 3 }).map((_, j) => (
-                    <polygon
-                      key={`${i}-${j}`}
-                      points="20,0 23,14 37,14 26,23 30,37 20,28 10,37 14,23 3,14 17,14"
-                      fill="#FFD700"
-                      transform={`translate(${i * 40 - 10}, ${j * 40 - 10})`}
-                    />
+                    <polygon key={`${i}-${j}`} points="20,0 23,14 37,14 26,23 30,37 20,28 10,37 14,23 3,14 17,14" fill="#FFD700" transform={`translate(${i * 40 - 10}, ${j * 40 - 10})`} />
                   ))
                 )}
               </svg>
             </div>
-
-            {/* ── Center radial glow ── */}
-            <div style={{
-              position: "absolute", top: "50%", left: "50%",
-              transform: "translate(-50%, -50%)",
-              width: "300px", height: "300px", borderRadius: "50%",
-              background: "radial-gradient(circle, rgba(18,55,22,0.5) 0%, transparent 70%)",
-              pointerEvents: "none", zIndex: 1,
-            }} />
-
-            {/* ── Crescent moon ── */}
+            <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "300px", height: "300px", borderRadius: "50%", background: "radial-gradient(circle, rgba(18,55,22,0.5) 0%, transparent 70%)", pointerEvents: "none", zIndex: 1 }} />
             <div style={{ position: "absolute", top: "18px", right: "22px", zIndex: 5, pointerEvents: "none" }}>
-              <svg width="46" height="46" viewBox="0 0 46 46">
-                <circle cx="23" cy="23" r="17" fill="rgba(255,215,0,0.2)" />
-                <circle cx="30" cy="17" r="14" fill="#060e08" />
-              </svg>
+              <svg width="46" height="46" viewBox="0 0 46 46"><circle cx="23" cy="23" r="17" fill="rgba(255,215,0,0.2)" /><circle cx="30" cy="17" r="14" fill="#060e08" /></svg>
             </div>
-
-            {/* ── Sparkle stars ── */}
-            <div style={{ position: "absolute", top: "24px", right: "76px", zIndex: 5, pointerEvents: "none" }}>
-              <svg width="11" height="11" viewBox="0 0 12 12"><path d="M6 0L7.5 4.5L12 6L7.5 7.5L6 12L4.5 7.5L0 6L4.5 4.5Z" fill="rgba(255,215,0,0.6)" /></svg>
-            </div>
-            <div style={{ position: "absolute", bottom: "58px", left: "22px", zIndex: 5, pointerEvents: "none" }}>
-              <svg width="9" height="9" viewBox="0 0 12 12"><path d="M6 0L7.5 4.5L12 6L7.5 7.5L6 12L4.5 7.5L0 6L4.5 4.5Z" fill="rgba(255,215,0,0.4)" /></svg>
-            </div>
-            <div style={{ position: "absolute", top: "52%", right: "16px", zIndex: 5, pointerEvents: "none" }}>
-              <svg width="7" height="7" viewBox="0 0 12 12"><path d="M6 0L7.5 4.5L12 6L7.5 7.5L6 12L4.5 7.5L0 6L4.5 4.5Z" fill="rgba(255,215,0,0.3)" /></svg>
-            </div>
-            <div style={{ position: "absolute", top: "34%", left: "18px", zIndex: 5, pointerEvents: "none" }}>
-              <svg width="7" height="7" viewBox="0 0 12 12"><path d="M6 0L7.5 4.5L12 6L7.5 7.5L6 12L4.5 7.5L0 6L4.5 4.5Z" fill="rgba(255,215,0,0.25)" /></svg>
-            </div>
-
-            {/* ── TOP GOLD BAR ── */}
-            <div style={{
-              height: "6px",
-              background: "linear-gradient(90deg, transparent 0%, #6b4f00 10%, #FFD700 30%, #FFFACD 50%, #FFD700 70%, #6b4f00 90%, transparent 100%)",
-            }} />
-
-            {/* ── CONTENT ── */}
+            <div style={{ height: "6px", background: "linear-gradient(90deg, transparent 0%, #6b4f00 10%, #FFD700 30%, #FFFACD 50%, #FFD700 70%, #6b4f00 90%, transparent 100%)" }} />
             <div style={{ padding: "22px 26px 26px", position: "relative", zIndex: 4 }}>
-
-              {/* ── Top ornamental header ── */}
               <div style={{ textAlign: "center", marginBottom: "20px" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", marginBottom: "10px" }}>
-                  <div style={{ height: "1px", flex: 1, background: "linear-gradient(90deg, transparent, rgba(212,175,55,0.55))" }} />
-                  <svg width="18" height="18" viewBox="0 0 18 18">
-                    <path d="M9 0L10.8 6.3L18 9L10.8 11.7L9 18L7.2 11.7L0 9L7.2 6.3Z" fill="rgba(255,215,0,0.75)" />
-                  </svg>
-                  <div style={{ height: "1px", flex: 1, background: "linear-gradient(90deg, rgba(212,175,55,0.55), transparent)" }} />
-                </div>
-
-                <p style={{
-                  margin: 0, fontSize: "13px", fontWeight: "700",
-                  letterSpacing: "5px", color: "rgba(255,215,0,0.8)",
-                  textTransform: "uppercase",
-                }}>ঈদ মোবারক</p>
-                <p style={{
-                  margin: "4px 0 0", fontSize: "10px",
-                  letterSpacing: "3px", color: "rgba(255,215,0,0.38)",
-                }}>EID MUBARAK</p>
-
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", marginTop: "10px" }}>
-                  <div style={{ height: "1px", flex: 1, background: "linear-gradient(90deg, transparent, rgba(212,175,55,0.35))" }} />
-                  <div style={{ width: "4px", height: "4px", borderRadius: "50%", background: "rgba(255,215,0,0.5)" }} />
-                  <div style={{ height: "1px", flex: 1, background: "linear-gradient(90deg, rgba(212,175,55,0.35), transparent)" }} />
-                </div>
+                <p style={{ margin: 0, fontSize: "13px", fontWeight: "700", letterSpacing: "5px", color: "rgba(255,215,0,0.8)", textTransform: "uppercase" }}>ঈদ মোবারক</p>
+                <p style={{ margin: "4px 0 0", fontSize: "10px", letterSpacing: "3px", color: "rgba(255,215,0,0.38)" }}>EID MUBARAK</p>
               </div>
 
-              {/* ── QR CODE — luxury triple-layer frame ── */}
               <div style={{
                 margin: "0 auto",
                 width: "232px", height: "232px",
                 padding: "3px",
                 borderRadius: "24px",
                 background: "linear-gradient(145deg, #FFD700 0%, #C5A028 25%, #FFF0A0 50%, #C5A028 75%, #FFD700 100%)",
-                boxShadow: "0 0 0 1px rgba(255,215,0,0.12), 0 16px 48px rgba(0,0,0,0.7), 0 0 30px rgba(255,215,0,0.08)",
+                boxShadow: "0 0 0 1px rgba(255,215,0,0.12), 0 16px 48px rgba(0,0,0,0.7)",
               }}>
-                <div style={{
-                  width: "100%", height: "100%",
-                  borderRadius: "21px",
-                  background: "#fafafa",
-                  padding: "3px",
-                  boxSizing: "border-box",
-                }}>
-                  <div style={{
-                    width: "100%", height: "100%",
-                    borderRadius: "19px",
-                    background: "#ffffff",
-                    padding: "10px",
-                    boxSizing: "border-box",
-                    position: "relative",
-                  }}>
-                    {/* Gold corner brackets */}
-                    {[
-                      { top: "7px", left: "7px", borderTop: "2.5px solid #C5A028", borderLeft: "2.5px solid #C5A028", borderRadius: "3px 0 0 0" },
-                      { top: "7px", right: "7px", borderTop: "2.5px solid #C5A028", borderRight: "2.5px solid #C5A028", borderRadius: "0 3px 0 0" },
-                      { bottom: "7px", left: "7px", borderBottom: "2.5px solid #C5A028", borderLeft: "2.5px solid #C5A028", borderRadius: "0 0 0 3px" },
-                      { bottom: "7px", right: "7px", borderBottom: "2.5px solid #C5A028", borderRight: "2.5px solid #C5A028", borderRadius: "0 0 3px 0" },
-                    ].map((s, i) => (
-                      <div key={i} style={{ position: "absolute", width: "16px", height: "16px", ...s }} />
-                    ))}
-                    <img
-                      src={croppedQr}
-                      alt="bKash QR Code"
-                      style={{ width: "100%", height: "100%", objectFit: "contain", borderRadius: "8px", display: "block" }}
-                    />
-                  </div>
+                <div style={{ width: "100%", height: "100%", borderRadius: "21px", background: "#ffffff", padding: "10px", boxSizing: "border-box" }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={croppedQr}
+                    alt="bKash QR Code"
+                    decoding="sync"
+                    crossOrigin="anonymous"
+                    style={{ width: "100%", height: "100%", objectFit: "contain", borderRadius: "8px", display: "block" }}
+                  />
                 </div>
               </div>
 
-              {/* ── bKash logo + gold rule ── */}
               <div style={{ textAlign: "center", marginTop: "22px" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "12px" }}>
-                  <div style={{ height: "1px", width: "44px", background: "linear-gradient(90deg, transparent, rgba(212,175,55,0.5))" }} />
-                  <span style={{
-                    fontSize: "32px", fontWeight: "900", color: "#E2136E",
-                    letterSpacing: "-1px", lineHeight: 1,
-                  }}>bKash</span>
-                  <div style={{ height: "1px", width: "44px", background: "linear-gradient(90deg, rgba(212,175,55,0.5), transparent)" }} />
-                </div>
-
-                {/* Gold shimmer divider */}
-                <div style={{
-                  margin: "9px auto",
-                  width: "110px", height: "2px", borderRadius: "2px",
-                  background: "linear-gradient(90deg, transparent, #8B6914, #FFD700, #FFFACD, #FFD700, #8B6914, transparent)",
-                }} />
-
-                {/* Salami badge */}
-                <div style={{
-                  display: "inline-flex", alignItems: "center", gap: "7px",
-                  padding: "8px 18px", borderRadius: "28px",
-                  background: "linear-gradient(135deg, rgba(255,215,0,0.1), rgba(255,215,0,0.04))",
-                  border: "1px solid rgba(255,215,0,0.28)",
-                }}>
-                  <svg width="9" height="9" viewBox="0 0 12 12"><path d="M6 0L7.5 4.5L12 6L7.5 7.5L6 12L4.5 7.5L0 6L4.5 4.5Z" fill="rgba(255,215,0,0.75)" /></svg>
-                  <span style={{
-                    fontSize: "11px", fontWeight: "700",
-                    color: "rgba(255,215,0,0.78)", letterSpacing: "0.8px",
-                  }}>ঈদ সালামি পাঠান</span>
-                  <svg width="9" height="9" viewBox="0 0 12 12"><path d="M6 0L7.5 4.5L12 6L7.5 7.5L6 12L4.5 7.5L0 6L4.5 4.5Z" fill="rgba(255,215,0,0.75)" /></svg>
-                </div>
-
-                {/* Scan note */}
-                <p style={{
-                  margin: "13px 0 0", fontSize: "9px",
-                  color: "rgba(255,255,255,0.2)", letterSpacing: "1.5px",
-                  textTransform: "uppercase",
-                }}>
-                  bKash App দিয়ে স্ক্যান করুন
-                </p>
+                <span style={{ fontSize: "32px", fontWeight: "900", color: "#E2136E", letterSpacing: "-1px" }}>bKash</span>
+                <div style={{ margin: "9px auto", width: "110px", height: "2px", background: "linear-gradient(90deg, transparent, #FFD700, transparent)" }} />
+                <span style={{ fontSize: "11px", fontWeight: "700", color: "rgba(255,215,0,0.78)", letterSpacing: "0.8px" }}>ঈদ সালামি পাঠান</span>
               </div>
             </div>
-
-            {/* ── BOTTOM GOLD BAR ── */}
-            <div style={{
-              height: "6px",
-              background: "linear-gradient(90deg, transparent 0%, #6b4f00 10%, #FFD700 30%, #FFFACD 50%, #FFD700 70%, #6b4f00 90%, transparent 100%)",
-            }} />
+            <div style={{ height: "6px", background: "linear-gradient(90deg, transparent 0%, #6b4f00 10%, #FFD700 30%, #FFFACD 50%, #FFD700 70%, #6b4f00 90%, transparent 100%)" }} />
           </div>
-          {/* ══════════════════════════════════════════════════════════════════════════ */}
 
           <button 
             onClick={handleDownload}
