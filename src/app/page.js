@@ -69,7 +69,8 @@ export default function Home() {
       
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold text-white mb-3">
-          বিকাশ <span style={{ color: BKASH_PINK }}>প্রিমিয়াম</span> কার্ড জেনারেটর
+          বিকাশ <span style={{ color: BKASH_PINK }}>প্রিমিয়াম </span>  
+সালামি কার্ড জেনারেটর
         </h1>
         <p className="text-gray-400">আপনার bKash QR কোড আপলোড করুন এবং নতুন কার্ড তৈরি করুন</p>
       </div>
