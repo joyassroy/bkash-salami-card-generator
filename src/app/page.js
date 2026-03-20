@@ -53,11 +53,41 @@ export default function Home() {
   const handleDownload = async () => {
     if (cardRef.current) {
       try {
-        const dataUrl = await htmlToImage.toPng(cardRef.current, { quality: 1, pixelRatio: 3 });
+        const dataUrl = await htmlToImage.toPng(cardRef.current, { quality: 1, pixelRatio: 2 });
+        
+        if (navigator.share) {
+          try {
+            const response = await fetch(dataUrl);
+            const blob = await response.blob();
+            const file = new File([blob], "eid-salami-card.png", { type: blob.type });
+
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+              await navigator.share({
+                files: [file],
+                title: 'ঈদ সালামি কার্ড',
+                text: 'আমার বিকাশ সালামি কার্ড স্ক্যান করুন!',
+              });
+              return; 
+            }
+          } catch (shareError) {
+            console.log("শেয়ার ক্যান্সেল হয়েছে বা সমস্যা হয়েছে:", shareError);
+          }
+        }
+
+        // ইন-অ্যাপ ব্রাউজার বা ফলব্যাকের জন্য ডাউনলোড
         const link = document.createElement("a");
         link.download = "premium-bkash-card.png";
         link.href = dataUrl;
-        link.click();
+        
+        // কিছু ব্রাউজারে ডাইরেক্ট ক্লিক কাজ না করলে
+        if (document.createEvent) {
+            const event = document.createEvent('MouseEvents');
+            event.initEvent('click', true, true);
+            link.dispatchEvent(event);
+        } else {
+            link.click();
+        }
+
       } catch (error) {
         console.error("কার্ড ডাউনলোড করতে সমস্যা হয়েছে:", error);
       }
@@ -68,9 +98,9 @@ export default function Home() {
     <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center p-6 font-sans">
       
       <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold text-white mb-3">
-          বিকাশ <span style={{ color: BKASH_PINK }}>প্রিমিয়াম </span>  
-সালামি কার্ড জেনারেটর
+        <h1 className="text-4xl font-bold text-white mb-3 flex flex-wrap justify-center gap-2">
+          বিকাশ <span style={{ color: BKASH_PINK }}>প্রিমিয়াম</span>  
+          <span>সালামি কার্ড জেনারেটর</span>
         </h1>
         <p className="text-gray-400">আপনার bKash QR কোড আপলোড করুন এবং নতুন কার্ড তৈরি করুন</p>
       </div>
@@ -96,7 +126,7 @@ export default function Home() {
             </li>
             <li className="flex items-start gap-3">
               <div className={`w-7 h-7 rounded-full bg-[${BKASH_PINK}]/20 text-[${BKASH_PINK}] flex items-center justify-center flex-shrink-0 mt-0.5 border border-[${BKASH_PINK}]/30`}>২</div>
-              <p className="leading-relaxed">উপরের দিকের আইকন থেকে <strong className="text-white">"আপনার QR কোড"</strong> (Your QR Code) অপশনে যান এবং ছবিটি ডাউনলোড/সেভ করুন।</p>
+              <p className="leading-relaxed">এরপর <strong className="text-white">"আমার বিকাশ" (My bKash)</strong> এ গিয়ে ডানে কোনায় থাকা <strong className="text-white">QR কোড</strong> অপশনে যান এবং সেখান থেকে আপনার QR কোডটি ডাউনলোড করুন।</p>
             </li>
             <li className="flex items-start gap-3">
               <div className={`w-7 h-7 rounded-full bg-[${BKASH_PINK}]/20 text-[${BKASH_PINK}] flex items-center justify-center flex-shrink-0 mt-0.5 border border-[${BKASH_PINK}]/30`}>৩</div>
@@ -127,25 +157,28 @@ export default function Home() {
       </div>
 
       {src && !isLoading && (
-        <div className="flex flex-col items-center">
-          <Cropper
-            ref={cropperRef}
-            style={{ height: 400, width: "100%" }}
-            initialAspectRatio={1}
-            preview=".img-preview"
-            src={src}
-            viewMode={1}
-            minCropBoxHeight={10}
-            minCropBoxWidth={10}
-            background={false}
-            responsive={true}
-            autoCropArea={1}
-            checkOrientation={false}
-            guides={true}
-          />
+        <div className="flex flex-col items-center w-full max-w-md">
+          <div className="w-full bg-white/5 p-4 rounded-3xl backdrop-blur-sm border border-white/10">
+            <Cropper
+              ref={cropperRef}
+              style={{ height: 350, width: "100%" }}
+              initialAspectRatio={1}
+              preview=".img-preview"
+              src={src}
+              viewMode={1}
+              minCropBoxHeight={50}
+              minCropBoxWidth={50}
+              background={false}
+              responsive={true}
+              autoCropArea={0.8}
+              checkOrientation={false}
+              guides={true}
+              dragMode="move"
+            />
+          </div>
           <button 
             onClick={cropImage}
-            className={`mt-4 bg-[${BKASH_PINK}] hover:bg-[#c10e5a] text-white px-8 py-3 rounded-full font-semibold transition-all shadow-lg flex items-center gap-2`}
+            className={`mt-6 w-full max-w-[200px] bg-[${BKASH_PINK}] hover:bg-[#c10e5a] text-white px-8 py-3 rounded-full font-semibold transition-all shadow-lg flex items-center justify-center gap-2`}
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-5">
               <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
@@ -170,6 +203,7 @@ export default function Home() {
         </div>
       )}
 
+      {/* ৩. =================== শুধু এই CARD অংশটি পরিবর্তন করা হয়েছে =================== */}
       {croppedQr && !isLoading && (
         <div className="flex flex-col items-center mt-6 animate-fade-in-up">
 
